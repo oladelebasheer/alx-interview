@@ -24,7 +24,7 @@ def rotate_2d_matrix(matrix):
         if rw == -1:
             rw = rows - 1
             cm += 1
-        matrix[-1].append(matrix[r][c])
+        matrix[-1].append(matrix[rw][cm])
         if cm == cols - 1 and rw >= -1:
             matrix.pop(rw)
         rw -= 1
