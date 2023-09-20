@@ -1,38 +1,50 @@
 #!/usr/bin/python3
-'''Module for log parsing script.'''
+"""
+log parsing
+"""
+
 import sys
+import re
+
+
+def output(log: dict) -> None:
+    """
+    helper function to display stats
+    """
+    print("File size: {}".format(log["file_size"]))
+    for code in sorted(log["code_frequency"]):
+        if log["code_frequency"][code]:
+            print("{}: {}".format(code, log["code_frequency"][code]))
+
 
 if __name__ == "__main__":
-    size = [0]
-    codes = {200: 0, 301: 0, 400: 0, 401: 0, 403: 0, 404: 0, 405: 0, 500: 0}
+    regex = re.compile(
+    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} - \[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d+\] "GET /projects/260 HTTP/1.1" (.{3}) (\d+)')  # nopep8
 
-    def check_match(line):
-        '''Checks for regexp match in line.'''
-        try:
-            line = line[:-1]
-            words = line.split(" ")
-            size[0] += int(words[-1])
-            code = int(words[-2])
-            if code in codes:
-                codes[code] += 1
-        except:
-            pass
+    line_count = 0
+    log = {}
+    log["file_size"] = 0
+    log["code_frequency"] = {
+        str(code): 0 for code in [
+            200, 301, 400, 401, 403, 404, 405, 500]}
 
-    def print_stats():
-        '''Prints accumulated statistics.'''
-        print("File size: {}".format(size[0]))
-        for k in sorted(codes.keys()):
-            if codes[k]:
-                print("{}: {}".format(k, codes[k]))
-    i = 1
     try:
         for line in sys.stdin:
-            check_match(line)
-            if i % 10 == 0:
-                print_stats()
-            i += 1
-    except KeyboardInterrupt:
-        print_stats()
-        raise
-    print_stats()
+            line = line.strip()
+            match = regex.fullmatch(line)
+            if (match):
+                line_count += 1
+                code = match.group(1)
+                file_size = int(match.group(2))
 
+                # File size
+                log["file_size"] += file_size
+
+                # status code
+                if (code.isdecimal()):
+                    log["code_frequency"][code] += 1
+
+                if (line_count % 10 == 0):
+                    output(log)
+    finally:
+        output(log)
